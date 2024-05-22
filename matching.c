@@ -22,17 +22,19 @@ int main(){
     char name2[20],content2[20];
     int i,j,k,n_i,n_j,max_n=0;
     int loop1,loop2;
-    char file1[30]="data/city021/city021_001.txt";
-    char file2[30]="data/city011/city011_001.txt";
+    int score=0;
+    char file1[30]="data/city022/city022_001.txt";
+    char file2[30]="data/city022/city022_001.txt";
     double I[MAX_N][15],J[MAX_N][15];
+    double total_cst[MAX_N];
     COST cstlist[MAX_CSTLIST];
     NODE maps[MAX_N][MAX_N];
     
     //Loop1
-    for(loop1=0;loop1<1;loop1++){
+    for(loop1=0;loop1<100;loop1++){
         //data scan1
         if((fph = fopen(file1,"r"))==NULL){
-		    printf("Can not open txte file\n");
+		    printf("Can not open txte file 1\n");
 		    return -1;
 	    }
         fscanf(fph,"%s",name1);
@@ -46,10 +48,11 @@ int main(){
 	    }
 
         //Loop2
-        for(loop2=0;loop2<10;loop2++){
+        file2[23]='1';file2[22]='0';file2[21]='0';
+        for(loop2=0;loop2<100;loop2++){
             //data scan2
             if((fpt = fopen(file2,"r"))==NULL){
-		        printf("Can not open txte file\n");
+		        printf("Can not open txte file 2\n");
 		        return -1;
 	        }
             fscanf(fpt,"%s",name2);
@@ -124,10 +127,9 @@ int main(){
             //calculate all cost
             tmp_x = goal_x;
             tmp_y = goal_y;
-            double total_cst;
             maps[tmp_x][tmp_y].cst_r = ((tmp_x-maps[tmp_x][tmp_y].from_x)+(tmp_y-maps[tmp_x][tmp_y].from_y))*maps[tmp_x][tmp_y].data + maps[maps[tmp_x][tmp_y].from_x][maps[tmp_x][tmp_y].from_y].cst_r;
-            total_cst = maps[tmp_x][tmp_y].cst_r;
-            printf("total cst%d:%lf\n",loop2,total_cst);
+            total_cst[loop2] = maps[tmp_x][tmp_y].cst_r;
+            
 
             fclose(fpt);
             //update file2 adress
@@ -142,6 +144,16 @@ int main(){
             }
         }
 
+        int min_cst_index=0;
+        for(i=1;i<100;i++){
+            if(total_cst[i]<total_cst[min_cst_index]){
+                min_cst_index=i;
+            }
+        }
+        if(min_cst_index==loop1){
+            score++;
+        }
+
         fclose(fph);
         //update file1 adress
         file1[23]++;
@@ -153,14 +165,8 @@ int main(){
                 file1[21]++;
             }
         }
-
-        //output
-        for(i=0;i<n_i;i++){
-            for(j=0;j<n_j;j++){
-                //printf("%d ",maps[i][j].flag);
-            }
-            //printf("\n");
-        }
     }
+    //output
+    printf("%d\n",score);
     return 0;
 }
