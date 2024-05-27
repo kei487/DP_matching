@@ -93,32 +93,13 @@ int main(){
             int tmp_x=0,tmp_y=0;
             int goal_x=n_i-1,goal_y=n_j-1;
             maps[tmp_x][tmp_y].cst_r = maps[tmp_x][tmp_y].data;
-            while(1){
-                maps[tmp_x][tmp_y].flag=0;
-                //calcualte cost:real and virtual
-                maps[tmp_x][tmp_y].cst_s[0] = maps[tmp_x+1][tmp_y].flag * (maps[tmp_x][tmp_y].cst_r + maps[tmp_x+1][tmp_y].data + GEIN*( (goal_x-(tmp_x+1))*(goal_x-(tmp_x+1)) + (goal_y-(tmp_y))*(goal_y-(tmp_y)) ) );
-                maps[tmp_x][tmp_y].cst_s[1] = maps[tmp_x][tmp_y+1].flag * (maps[tmp_x][tmp_y].cst_r + maps[tmp_x][tmp_y+1].data + GEIN*( (goal_x-(tmp_x))*(goal_x-(tmp_x)) + (goal_y-(tmp_y+1))*(goal_y-(tmp_y+1)) ) );
-                maps[tmp_x][tmp_y].cst_s[2] = maps[tmp_x+1][tmp_y+1].flag * (maps[tmp_x][tmp_y].cst_r + 2*maps[tmp_x+1][tmp_y+1].data + GEIN*( (goal_x-(tmp_x+1))*(goal_x-(tmp_x+1)) + (goal_y-(tmp_y+1))*(goal_y-(tmp_y+1)) ) );
-                //printf("right:%lf  down:%lf  rightdown:%lf\n",maps[tmp_x][tmp_y].cst_s[0],maps[tmp_x][tmp_y].cst_s[1],maps[tmp_x][tmp_y].cst_s[2]);
-                //registe data for costlist
-                for(i=0;i<3;i++){
-                    cstlist[cl_i].cst = maps[tmp_x][tmp_y].cst_s[i];
-                    cstlist[cl_i].drec = i;
-                    cstlist[cl_i].from_x = tmp_x;
-                    cstlist[cl_i].from_y = tmp_y;
-                    cstlist[cl_i].x = tmp_x + (i!=1 ? 1:0);
-                    cstlist[cl_i].y = tmp_y +  (i!=0 ? 1:0);
-                    cl_i++;
-                }
-                //search min cost in cstlist
-                int min_index = -1;
-                for(i=0;i<cl_i;i++){
-                    if(maps[cstlist[i].x][cstlist[i].y].flag){
-                        if(min_index==-1) min_index=i;
-                        if(cstlist[i].cst < cstlist[min_index].cst){
-                            min_index=i;
-                        }
-                    }
+            for(i=0;i<n_i;i++){
+                for(j=0;j<n_j;j++){
+                    if(i==0&&j==~)
+                    //calcualte real cost
+                    maps[i][j].cst_s[0] = maps[i+1][j].flag * (maps[tmp_x][tmp_y].cst_r + maps[tmp_x+1][tmp_y].data );
+                    maps[i][j].cst_s[1] = maps[i][j+1].flag * (maps[tmp_x][tmp_y].cst_r + maps[tmp_x][tmp_y+1].data );
+                    maps[i][j].cst_s[2] = maps[i+1][j+1].flag * (maps[tmp_x][tmp_y].cst_r + 2*maps[tmp_x+1][tmp_y+1].data );
                 }
                 
                 //handover
