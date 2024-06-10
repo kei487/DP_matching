@@ -1,11 +1,15 @@
+// SPDX-FileCopyrightText: 2024 Keitaro Nakamaura
+// SPDX-License-Identifier: BSD-3-Clause
 #include <stdio.h>
+#include <math.h>
 #include <time.h>
 
 #define MAX_N 140
 #define MAX_CSTLIST MAX_N*MAX_N*3
 #define LOOP1 100
 #define LOOP2 100
-#define GEIN 0.03
+#define SGEIN 0.2 //0.03
+#define RGEIN 2
 
 typedef struct{
     int from_x,from_y;
@@ -18,7 +22,7 @@ typedef struct{
     double cst;
     int x,y;
     int from_x,from_y;
-    int drec; //0 means right::1 means down::2 means down right 
+    int drec; //0 means right, 1 means down, 2 means down right 
 }COST;
 
 
@@ -30,13 +34,14 @@ int main(){
     int i,j,k,n_i,n_j,max_n=0;
     int loop1,loop2;
     int score=0;
-    char file1[30]="data/city012/city012_001.txt";
-    char file2[30]="data/city011/city011_001.txt";
+    char file1[30]="data/city011/city011_001.txt";
+    char file2[30]="data/city021/city021_001.txt";
     double I[MAX_N][15],J[MAX_N][15];
     double total_cst[MAX_N];
     COST cstlist[MAX_CSTLIST];
     NODE maps[MAX_N][MAX_N];
-    clock_t start_clock, end_clock;
+    clock_t start_clock, end_clock,tmp_sc,tmp_ec;
+    int loop_counter;
 
     // 処理開始前のクロックを取得 
     start_clock = clock();
@@ -59,6 +64,7 @@ int main(){
             }
 	    }
 
+        loop_counter=0;tmp_sc=clock();
         //======Loop2=======
         file2[21]='0';file2[22]='0';file2[23]='1';
         for(loop2=0;loop2<LOOP2;loop2++){
@@ -82,23 +88,23 @@ int main(){
                     maps[i][j].data=0;
                     for(k=0;k<15;k++){
                         maps[i][j].data += (I[i][k]-J[j][k])*(I[i][k]-J[j][k]);
-                    }    
+                    }
+                    maps[i][j].data = maps[i][j].data;
                     maps[i][j].flag=1;
-                }maps[i][j].flag=0;
-            }for(j=0;j<n_j;j++){maps[i][j].flag=0;}
+                }maps[i][j].flag=3;
+            }for(j=0;j<n_j;j++){maps[i][j].flag=3;}
 
             //A* algorithm
             int cl_i=0;
-            int loop_counter=0;
             int tmp_x=0,tmp_y=0;
             int goal_x=n_i-1,goal_y=n_j-1;
             maps[tmp_x][tmp_y].cst_r = maps[tmp_x][tmp_y].data;
             while(1){
                 maps[tmp_x][tmp_y].flag=0;
                 //calcualte cost:real and virtual
-                maps[tmp_x][tmp_y].cst_s[0] = maps[tmp_x+1][tmp_y].flag * (maps[tmp_x][tmp_y].cst_r + maps[tmp_x+1][tmp_y].data + GEIN*( (goal_x-(tmp_x+1))*(goal_x-(tmp_x+1)) + (goal_y-(tmp_y))*(goal_y-(tmp_y)) ) );
-                maps[tmp_x][tmp_y].cst_s[1] = maps[tmp_x][tmp_y+1].flag * (maps[tmp_x][tmp_y].cst_r + maps[tmp_x][tmp_y+1].data + GEIN*( (goal_x-(tmp_x))*(goal_x-(tmp_x)) + (goal_y-(tmp_y+1))*(goal_y-(tmp_y+1)) ) );
-                maps[tmp_x][tmp_y].cst_s[2] = maps[tmp_x+1][tmp_y+1].flag * (maps[tmp_x][tmp_y].cst_r + 2*maps[tmp_x+1][tmp_y+1].data + GEIN*( (goal_x-(tmp_x+1))*(goal_x-(tmp_x+1)) + (goal_y-(tmp_y+1))*(goal_y-(tmp_y+1)) ) );
+                if(maps[tmp_x+1][tmp_y].flag!=3) maps[tmp_x][tmp_y].cst_s[0] = (maps[tmp_x][tmp_y].cst_r +       maps[tmp_x+1][tmp_y].data   + SGEIN * ( (goal_x-(tmp_x+1))*(goal_x-(tmp_x+1)) + (goal_y-(tmp_y))  *(goal_y-(tmp_y))   ) );
+                if(maps[tmp_x][tmp_y+1].flag!=3) maps[tmp_x][tmp_y].cst_s[1] = (maps[tmp_x][tmp_y].cst_r +       maps[tmp_x][tmp_y+1].data   + SGEIN * ( (goal_x-(tmp_x))  *(goal_x-(tmp_x))   + (goal_y-(tmp_y+1))*(goal_y-(tmp_y+1)) ) );
+                if(maps[tmp_x+1][tmp_y+1].flag!=3) maps[tmp_x][tmp_y].cst_s[2] = (maps[tmp_x][tmp_y].cst_r + RGEIN*maps[tmp_x+1][tmp_y+1].data + SGEIN * ( (goal_x-(tmp_x+1))*(goal_x-(tmp_x+1)) + (goal_y-(tmp_y+1))*(goal_y-(tmp_y+1)) ) );
                 //printf("right:%lf  down:%lf  rightdown:%lf\n",maps[tmp_x][tmp_y].cst_s[0],maps[tmp_x][tmp_y].cst_s[1],maps[tmp_x][tmp_y].cst_s[2]);
                 //registe data for costlist
                 for(i=0;i<3;i++){
@@ -126,7 +132,9 @@ int main(){
                 tmp_y = cstlist[min_index].y;
                 maps[tmp_x][tmp_y].from_x = cstlist[min_index].from_x;
                 maps[tmp_x][tmp_y].from_y = cstlist[min_index].from_y;
-                maps[tmp_x][tmp_y].cst_r = ((tmp_x-maps[tmp_x][tmp_y].from_x)+(tmp_y-maps[tmp_x][tmp_y].from_y))*maps[tmp_x][tmp_y].data + maps[maps[tmp_x][tmp_y].from_x][maps[tmp_x][tmp_y].from_y].cst_r;
+                maps[tmp_x][tmp_y].cst_r = (cstlist[min_index].drec==2 ? RGEIN:1)*maps[tmp_x][tmp_y].data + maps[maps[tmp_x][tmp_y].from_x][maps[tmp_x][tmp_y].from_y].cst_r;
+
+                loop_counter++;
 
                 //finishing judge
                 if(tmp_x==goal_x && tmp_y==goal_y){
@@ -158,18 +166,24 @@ int main(){
                 }
             }
         }
-
+        
+        tmp_ec=clock();
+        
         int min_cst_index=0;
         for(i=1;i<LOOP2;i++){
             if(total_cst[i]<total_cst[min_cst_index]){
                 min_cst_index=i;
             }
         }
+        printf("%d::min index:%2d, cost:%lf",loop1,min_cst_index,total_cst[min_cst_index]);
+        printf(", calculate times:%d",loop_counter);
+        printf(", processing time:%f",(double)(tmp_ec - tmp_sc) / CLOCKS_PER_SEC);
         if(min_cst_index==loop1){
             score++;
+            printf(" CORRECT");
         }
-        //printf("%d:%d\n",loop1,min_cst_index);
-
+        printf("\n");
+        
         fclose(fp1);
         //update file1 adress
         file1[23]++;
